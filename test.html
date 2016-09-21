@@ -1,0 +1,63 @@
+<html>
+    <head>
+        <title>Learning Page</title>
+    </head>
+    <body>
+        <canvas id="canvas" width="600" height="600" style="border:2px solid #000000;"></canvas>
+        <div>
+            <button id="simulate" onclick="buttonClick()">Simulate</button>
+        </div>
+        <script src="board.js"></script>
+        <script>
+            var x = y = 15;
+            var aboard = new CHESSBOARD.Board(x,y);
+            
+            var canvas = document.getElementById("canvas");
+            var ctx = canvas.getContext("2d");
+            ctx.beginPath();
+            (function drawboard(){
+                for (var i = 0; i<x-1; i++){
+                    ctx.moveTo((i+1)*40,0);
+                    ctx.lineTo((i+1)*40,600);
+                }
+                for (var j = 0; j<y-1; j++){
+                    ctx.moveTo(0,(j+1)*40);
+                    ctx.lineTo(600,(j+1)*40);
+                }
+            })()
+            ctx.font = "20px Georgia"
+            ctx.stroke();
+            
+            function buttonClick(){
+                aboard.Randomize(1);    
+                var listofboards = aboard.GameHistory;
+                var boardlast = listofboards.length - 1;
+                var lastboard = listofboards[boardlast];
+                var boardO = JSON.parse(lastboard.pointRecord);
+                var whowin = lastboard.whoWin;
+                var keylist = Object.keys(boardO);
+                keylist.forEach(function(e,i,a){
+                    var xgrid = boardO[e].pointX;
+                    var ygrid = boardO[e].pointY;
+                    var player;
+                    if (boardO[e].takenBy == "Circle"){
+                        player = "O";
+                    } else if (boardO[e].takenBy == "Cross"){
+                        player = "X";
+                    } else {
+                        player = "";
+                    }
+                    ctx.fillText(player, xgrid*40+10, ygrid*40+30);
+                })
+                if (whowin){
+                    window.alert(whowin);
+                }
+            }
+            
+            
+            
+            
+            
+        </script>
+    </body>
+</html>
