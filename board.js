@@ -157,10 +157,10 @@ CHESSBOARD.Board.prototype.WhoPlay = function (playnum, x,y){
 
 CHESSBOARD.Board.prototype.CheckWin = function (){
     //find 5 consecutive pieces along 4 possible directions
-    var rowresult = findFive(this.Rows);
-    var colresult = findFive(this.Columns);
-    var diafresult = findFive(this.DiagonalsF);
-    var diabresult = findFive(this.DiagonalsB);
+    var rowresult = findN(this.Rows, CHESSBOARD.PlayStyle);
+    var colresult = findN(this.Columns, CHESSBOARD.PlayStyle);
+    var diafresult = findN(this.DiagonalsF, CHESSBOARD.PlayStyle);
+    var diabresult = findN(this.DiagonalsB, CHESSBOARD.PlayStyle);
     if (rowresult){
         return rowresult;
     }
@@ -176,14 +176,14 @@ CHESSBOARD.Board.prototype.CheckWin = function (){
     return false;
 }
 
-function findFive(array){
+function findN(array, ninrow){
     for (var i = 0; i < array.length; i++){
-        for (var j = 0; j<array[i].length - (CHESSBOARD.PlayStyle -1); j++){
+        for (var j = 0; j<array[i].length - (ninrow -1); j++){
             var point = array[i][j];
             if (point.takenBy != CHESSBOARD.BlankState){
                 var player = point.takenBy;
                 var temp = [];
-                for (var k =1; k< CHESSBOARD.PlayStyle;k++){
+                for (var k =1; k< ninrow;k++){
                     if (array[i][j+k] && array[i][j+k].takenBy == player){
                         temp.push(true);
                     } else {
