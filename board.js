@@ -209,3 +209,4 @@ CHESSBOARD.Board.prototype.ReportGame = function (playname,playnum,whowin){
     this.GameHistory.push(astep);
 }
 
+module.export CHESSBOARD.Board;
