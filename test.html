@@ -3,35 +3,40 @@
         <title>Learning Page</title>
     </head>
     <body>
-        <canvas id="canvas" width="600" height="600" style="border:2px solid #000000;"></canvas>
         <div>
             <button id="simulate" onclick="buttonClick()">Simulate</button>
         </div>
-        <div><span id="result"></span> Wins!</div>
+        <div id="canvas"></div>
         <script src="board.js"></script>
         <script>
             var x = y = 15;
             var aboard = new CHESSBOARD.Board(x,y);
-            var canvas = document.getElementById("canvas");
-            var ctx = canvas.getContext("2d");
+            var div = document.getElementById("canvas");
             function initiateBoard(){
-                ctx.clearRect(0,0,canvas.width,canvas.height);
+                var canvas = document.createElement("canvas");
+                canvas.height = 150;
+                canvas.width = 150;
+                canvas.style.border = "2px solid #000000";
+                var ctx = canvas.getContext("2d");
+                ctx.clearRect(0,0,150,150);
                 ctx.beginPath();
                 for (var i = 0; i<x-1; i++){
-                    ctx.moveTo((i+1)*40,0);
-                    ctx.lineTo((i+1)*40,600);
+                    ctx.moveTo((i+1)*10,0);
+                    ctx.lineTo((i+1)*10,150);
                 }
                 for (var j = 0; j<y-1; j++){
-                    ctx.moveTo(0,(j+1)*40);
-                    ctx.lineTo(600,(j+1)*40);
+                    ctx.moveTo(0,(j+1)*10);
+                    ctx.lineTo(150,(j+1)*10);
                 }
-                ctx.font = "20px Georgia"
+                ctx.font = "8px Georgia"
                 ctx.stroke();
+                div.appendChild(canvas);
+                return ctx;
             }
             
             function buttonClick(){
-                initiateBoard();
-                aboard.Randomize(1);    
+                var ctx = initiateBoard();
+                aboard.Generate(1);    
                 var listofboards = aboard.GameHistory;
                 var boardlast = listofboards.length - 1;
                 var lastboard = listofboards[boardlast];
@@ -49,17 +54,9 @@
                     } else {
                         player = "";
                     }
-                    ctx.fillText(player, xgrid*40+10, ygrid*40+30);
+                    ctx.fillText(player, xgrid*10+2.3, ygrid*10+7.7);
                 })
-                if (whowin){
-                    var dom = document.getElementById("result"); 
-                     dom.innerHTML= whowin;
-                }
             }
-            
-            
-            
-            
             
         </script>
     </body>

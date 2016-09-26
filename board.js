@@ -15,10 +15,11 @@ CHESSBOARD.BoardPoint = function (x,y,c){
     this.takenBy = c;
 }
 
-CHESSBOARD.PlayHistory = function (playname, playnum, points, whowin){
+CHESSBOARD.PlayHistory = function (playname, playnum, points, sequence, whowin){
     this.playName = playname;
     this.playNum = playnum;
     this.pointRecord = points;
+    this.sequenceList = sequence;
     this.whoWin = whowin;
 }
 
@@ -124,7 +125,7 @@ CHESSBOARD.Board.prototype.Reset = function (){
     }
 }
 
-CHESSBOARD.Board.prototype.Randomize = function (name){
+CHESSBOARD.Board.prototype.Generate = function (name){
     var playnum,xpo,ypo;
     var maxpos = this.X * this.Y;
     this.Reset();
@@ -157,56 +158,160 @@ CHESSBOARD.Board.prototype.WhoPlay = function (playnum, x,y){
 
 CHESSBOARD.Board.prototype.CheckWin = function (){
     //find 5 consecutive pieces along 4 possible directions
-    var rowresult = findN(this.Rows, CHESSBOARD.PlayStyle);
-    var colresult = findN(this.Columns, CHESSBOARD.PlayStyle);
-    var diafresult = findN(this.DiagonalsF, CHESSBOARD.PlayStyle);
-    var diabresult = findN(this.DiagonalsB, CHESSBOARD.PlayStyle);
-    if (rowresult){
-        return rowresult;
+    var rowresult = findN(this.Rows);
+    var colresult = findN(this.Columns);
+    var diafresult = findN(this.DiagonalsF);
+    var diabresult = findN(this.DiagonalsB);
+    if (rowresult.five1st || rowresult.five2nd || rowresult.six1st ||
+        rowresult.six2nd || rowresult.seven1st || rowresult.seven2nd ||
+        rowresult.eight1st || rowresult.eight2nd || rowresult.nine1st ||
+        rowresult.nine2nd){
+        return rowresult.winner;
     }
-    if (colresult){
-        return colresult;
+    if (colresult.five1st || colresult.five2nd || colresult.six1st ||
+        colresult.six2nd || colresult.seven1st || colresult.seven2nd ||
+        colresult.eight1st || colresult.eight2nd || colresult.nine1st ||
+        colresult.nine2nd){
+        return colresult.winner;
     }
-    if (diabresult){
-        return diabresult;
+    if (diafresult.five1st || diafresult.five2nd || diafresult.six1st ||
+        diafresult.six2nd || diafresult.seven1st || diafresult.seven2nd ||
+        diafresult.eight1st || diafresult.eight2nd || diafresult.nine1st ||
+        diafresult.nine2nd){
+        return diafresult.winner;
     }
-    if (diafresult){
-        return diafresult;
+    if (diabresult.five1st || diabresult.five2nd || diabresult.six1st ||
+        diabresult.six2nd || diabresult.seven1st || diabresult.seven2nd ||
+        diabresult.eight1st || diabresult.eight2nd || diabresult.nine1st ||
+        diabresult.nine2nd){
+        return diabresult.winner;
     }
     return false;
 }
 
-function findN(array, ninrow){
+function findN(array){
+    var temp = [];
     for (var i = 0; i < array.length; i++){
-        for (var j = 0; j<array[i].length - (ninrow -1); j++){
+        for (var j = 0; j<array[i].length; j++){
             var point = array[i][j];
             if (point.takenBy != CHESSBOARD.BlankState){
                 var player = point.takenBy;
-                var temp = [];
-                for (var k =1; k< ninrow;k++){
-                    if (array[i][j+k] && array[i][j+k].takenBy == player){
-                        temp.push(true);
-                    } else {
-                        temp.push(false);
-                    }
+                var k = 1;
+                while (array[i][j+k] && array[i][j+k].takenBy == player){
+                    k++;
                 }
-                if (temp.every(function(e){
-                    return e;
-                })){
-                    return player;
+                //do not collect 1 point
+                if (k != 1){
+                    var r = {player:player, amount:k}
+                    temp.push(r);
+                    j += k-1;
                 }
-                
             }
         }
     }
-    return false;
+    var two2nd = two1st = three1st = three2nd = four1st = four2nd =
+    five1st = five2nd = six1st = six2nd = seven1st = seven2nd =
+    eight1st = eight2nd = nine1st = nine2nd = 0;
+    var winneris = CHESSBOARD.BlankState;
+    temp.forEach(function(e,i){
+        if (e.amount == 2 && e.player == CHESSBOARD.Player1){
+            two1st += 1;
+        }
+        if (e.amount == 3 && e.player == CHESSBOARD.Player1){
+            three1st += 1;
+        }
+        if (e.amount == 4 && e.player == CHESSBOARD.Player1){
+            four1st += 1;
+        }
+        if (e.amount == 5 && e.player == CHESSBOARD.Player1){
+            five1st += 1;
+            winneris = CHESSBOARD.Player1;
+        }
+        if (e.amount == 6 && e.player == CHESSBOARD.Player1){
+            six1st += 1;
+            winneris = CHESSBOARD.Player1;
+        }
+        if (e.amount == 7 && e.player == CHESSBOARD.Player1){
+            seven1st += 1;
+            winneris = CHESSBOARD.Player1;
+        }
+        if (e.amount == 8 && e.player == CHESSBOARD.Player1){
+            eight1st += 1;
+            winneris = CHESSBOARD.Player1;
+        }
+        if (e.amount == 9 && e.player == CHESSBOARD.Player1){
+            nine1st += 1;
+            winneris = CHESSBOARD.Player1;
+        }
+        if (e.amount == 2 && e.player == CHESSBOARD.Player2){
+            two2nd += 1;
+        }
+        if (e.amount == 3 && e.player == CHESSBOARD.Player2){
+            three2nd += 1;
+        }
+        if (e.amount == 4 && e.player == CHESSBOARD.Player2){
+            four2nd += 1;
+        }
+        if (e.amount == 5 && e.player == CHESSBOARD.Player2){
+            five2nd += 1;
+            winneris = CHESSBOARD.Player2;
+        }
+        if (e.amount == 6 && e.player == CHESSBOARD.Player2){
+            six2nd += 1;
+            winneris = CHESSBOARD.Player2;
+        }
+        if (e.amount == 7 && e.player == CHESSBOARD.Player2){
+            seven2nd += 1;
+            winneris = CHESSBOARD.Player2;
+        }
+        if (e.amount == 8 && e.player == CHESSBOARD.Player2){
+            eight2nd += 1;
+            winneris = CHESSBOARD.Player2;
+        }
+        if (e.amount == 9 && e.player == CHESSBOARD.Player2){
+            nine2nd += 1;
+            winneris = CHESSBOARD.Player2;
+        }
+    })
+    return {two1st:two1st, two2nd:two2nd, three1st:three1st, three2nd:three2nd, 
+        four1st:four1st, four2nd:four2nd, five1st:five1st, five2nd:five2nd,
+        six1st:six1st, six2nd:six2nd, seven1st:seven1st, seven2nd:seven2nd, eight1st:eight1st, 
+        eight2nd:eight2nd, nine1st:nine1st, nine2nd:nine2nd, winner:winneris};
+
 }
 
 CHESSBOARD.Board.prototype.ReportGame = function (playname,playnum,whowin){
-    //report individual board state as string 
+    //report individual board point state and sequence list as string 
     var currentpoints = JSON.stringify(this.Points);
-    var astep = new CHESSBOARD.PlayHistory(playname,playnum,currentpoints,whowin)
+    var sequencelist = reportSequenceAmount(this.Rows,this.Columns,this.DiagonalsF,this.DiagonalsB);
+    var sequencestring = JSON.stringify(sequencelist);
+    var astep = new CHESSBOARD.PlayHistory(playname,playnum,currentpoints,sequencestring,whowin)
     this.GameHistory.push(astep);
 }
 
-module.export CHESSBOARD.Board;
+function reportSequenceAmount(row,col,diaf,diab){
+    var rowresult = findN(row);
+    var colresult = findN(col);
+    var diafresult = findN(diaf);
+    var diabresult = findN(diab);
+    var two1st = rowresult.two1st + colresult.two1st + diafresult.two1st + diabresult.two1st;
+    var two2nd = rowresult.two2nd + colresult.two2nd + diafresult.two2nd + diabresult.two2nd;
+    var three2nd = rowresult.three2nd + colresult.three2nd + diafresult.three2nd + diabresult.three2nd;
+    var three1st = rowresult.three1st + colresult.three1st + diafresult.three1st + diabresult.three1st;
+    var four2nd = rowresult.four2nd + colresult.four2nd + diafresult.four2nd + diabresult.four2nd;
+    var four1st = rowresult.four1st + colresult.four1st + diafresult.four1st + diabresult.four1st;
+    var five2nd = rowresult.five2nd + colresult.five2nd + diafresult.five2nd + diabresult.five2nd;
+    var five1st = rowresult.five1st + colresult.five1st + diafresult.five1st + diabresult.five1st;
+    var six2nd = rowresult.six2nd + colresult.six2nd + diafresult.six2nd + diabresult.six2nd;
+    var six1st = rowresult.six1st + colresult.six1st + diafresult.six1st + diabresult.six1st;
+    var seven2nd = rowresult.seven2nd + colresult.seven2nd + diafresult.seven2nd + diabresult.seven2nd;
+    var seven1st = rowresult.seven1st + colresult.seven1st + diafresult.seven1st + diabresult.seven1st;
+    var eight2nd = rowresult.eight2nd + colresult.eight2nd + diafresult.eight2nd + diabresult.eight2nd;
+    var eight1st = rowresult.eight1st + colresult.eight1st + diafresult.eight1st + diabresult.eight1st;
+    var nine2nd = rowresult.nine2nd + colresult.nine2nd + diafresult.nine2nd + diabresult.nine2nd;
+    var nine1st = rowresult.nine1st + colresult.nine1st + diafresult.nine1st + diabresult.nine1st;
+    return {two1st:two1st, two2nd:two2nd, three1st:three1st, three2nd:three2nd, four1st:four1st, 
+        four2nd:four2nd, five1st:five1st, five2nd:five2nd, six1st:six1st, six2nd:six2nd, seven1st:seven1st,
+        seven2nd:seven2nd, eight1st:eight1st, nine1st:nine1st, nine2nd:nine2nd}
+}
+
