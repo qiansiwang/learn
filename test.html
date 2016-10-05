@@ -80,7 +80,7 @@
             })
             function learnClick(){
                 var func = REGRESSION.LinearFunction;
-                var w = REGRESSION.Learn(points, 20, func);
+                var w = REGRESSION.BatchLearn(points, 500, func);
                 ctx.moveTo(100,400-(100*w[1]+w[0]));
                 ctx.lineTo(300,400-(300*w[1]+w[0]));
                 ctx.stroke();

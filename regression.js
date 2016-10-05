@@ -1,6 +1,6 @@
 var REGRESSION = REGRESSION || {};
 
-REGRESSION.TrainingStep = 0.0000005;
+REGRESSION.TrainingStep = 0.0000001;
 
 //Linear function is linear function of two vector x and w, x0=1
 REGRESSION.LinearFunction = function (x, w){
@@ -40,7 +40,6 @@ REGRESSION.BatchDeltaW = function (trainingset, currentw, func){
         trainingset.forEach(function (e){
             if (e.hasOwnProperty('Key') && e.hasOwnProperty('Value')){
                  var term = REGRESSION.GradientTerm(e.Value, e.Key, currentw, func);
-                 //this assumes linear
                  ele += term * e.Key[i];
             }
         })
@@ -48,6 +47,20 @@ REGRESSION.BatchDeltaW = function (trainingset, currentw, func){
     }
     return result;
 }
+
+//Stochastic Gradient Decent Weight Step
+REGRESSION.StochasticDeltaW = function (trainingset, currentw, func){
+    var result =[];
+    var index = Math.floor(Math.random()*trainingset.length);
+    var trainingexample = trainingset[index];
+    var term = REGRESSION.GradientTerm(trainingexample.Value, trainingexample.Key, currentw, func);
+    for (var i=0; i<currentw.length;i++){
+        var ele = term*trainingexample.Key[i];
+        result.push(ele);
+    }
+    return result;
+}
+
 
 //Initialize w by x, add one more because of w0
 REGRESSION.InitializeW = function (trainingset){
@@ -59,8 +72,8 @@ REGRESSION.InitializeW = function (trainingset){
     return result;
 }
 
-//Main Learning
-REGRESSION.Learn = function (trainingset, steps, func){
+//Main Learning with Batch Gradient Decent
+REGRESSION.BatchLearn = function (trainingset, steps, func){
     var w = REGRESSION.InitializeW(trainingset);
     for (var i = 0;i<steps; i++){
         w.forEach(function(e,j){
@@ -71,4 +84,14 @@ REGRESSION.Learn = function (trainingset, steps, func){
     return w;
 }
 
-
+//Main learning with Stochastic Gradient Decent
+REGRESSION.StochasticLearn = function (trainingset, steps, func){
+    var w = REGRESSION.InitializeW(trainingset);
+    for (var i = 0;i<steps; i++){
+        w.forEach(function(e,j){
+            w[j] += REGRESSION.StochasticDeltaW(trainingset, w, func)[j]; 
+        })
+        console.log(w);
+    }
+    return w;
+}
