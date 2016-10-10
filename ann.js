@@ -2,22 +2,21 @@
 
 var ANN = ANN || {};
 
-ANN.LEARNINGSTEP = 0.005;
-ANN.TRAININGSTEPS = 1000;
-
+ANN.LEARNINGSTEP = 0.05;
+ANN.TRAININGSTEPS = 200;
+ANN.counter = 1;
 ANN.NetWork = function (name){
     this.Name = name;
     this.HiddenLayers = [];
 }
 
 ANN.NetWork.prototype.AddLayer = function (layertype){
-    var counter = 0;
     if (layertype == ANN.LayerTypeEnum.Input){
         this.InputLayer = new ANN.InputLayer("InputLayer");
     }
     if (layertype == ANN.LayerTypeEnum.Hidden){
-        this.HiddenLayers.push(new ANN.HiddenLayer("HiddenLayer" + counter.toString()));
-        counter++;
+        this.HiddenLayers.push(new ANN.HiddenLayer("HiddenLayer" + ANN.counter.toString()));
+        ANN.counter++;
     }
     if (layertype == ANN.LayerTypeEnum.Output){
         this.OutputLayer = new ANN.OutputLayer("OutputLayer");
@@ -35,10 +34,23 @@ ANN.NetWork.prototype.AddUnit = function (layername, unittype){
     }
     if (layername.indexOf("HiddenLayer") !== -1){
         var index = Number(layername.slice(11));
-        this.HiddenLayers[index].AddUnit(new ANN.Perceptron(layername,ANN.LayerTypeEnum.Output,unittype));
+        this.HiddenLayers[index-1].AddUnit(new ANN.Perceptron(layername,ANN.LayerTypeEnum.Hidden,unittype));
     }
     if (layername == "InputLayer"){
         this.InputLayer.AddUnit(new ANN.InputObject());
+    }
+}
+
+ANN.NetWork.prototype.DeleteUnit = function (layername){
+    if (layername == "OutputLayer"){
+        this.OutputLayer.DeleteUnit();
+    }
+    if (layername.indexOf("HiddenLayer") !== -1){
+        var index = Number(layername.slice(11));
+        this.HiddenLayers[index-1].DeleteUnit();
+    }
+    if (layername == "InputLayer"){
+        this.InputLayer.DeleteUnit();
     }
 }
 
@@ -49,23 +61,22 @@ ANN.NetWork.prototype.Train = function (dataset){
     var outputlayer = this.OutputLayer;
     var counter = 1;
     //initial the input weight for all units
-    this.InitializeWeight();
-    
+    this.InitializeWeight(hiddenlayers,outputlayer);
     //training routine
     do {
-        dataset.forEach(function (e){
-            var input = e.Key;
-            var output = e.Value;
-            //forward propergate to get results of each unit
-            this.Feed(input, inputlayer, hiddenlayers, outputlayer);
+        for (var i=0;i<dataset.length;i++){
+            var input = dataset[i].Key;
+            var output = dataset[i].Value;
+             //forward propergate to get results of each unit
+            this.Feed(input);
             //back propergate to get error terms of each unit
             this.BackPropergateErrorTerm(output, inputlayer, hiddenlayers, outputlayer);
             //update input weight for all units
             this.UpdateInputWeight(hiddenlayers, outputlayer);
             //update output weight for all units
             this.OutputWeightCalc();
-        })
-        counter++;
+            counter++;
+        }
     }
     while (counter <= ANN.TRAININGSTEPS);
 }
@@ -110,7 +121,10 @@ ANN.NetWork.prototype.BackPropergateErrorTerm = function (output, inputlayer, hi
     }
 }
 
-ANN.NetWork.prototype.Feed = function(input, inputlayer, hiddenlayers, outputlayer){
+ANN.NetWork.prototype.Feed = function(input){
+    var inputlayer = this.InputLayer;
+    var hiddenlayers = this.HiddenLayers;
+    var outputlayer = this.OutputLayer;
     input.forEach(function (h,j){
         inputlayer.Units[j].Result = h;
     })
@@ -127,7 +141,7 @@ ANN.NetWork.prototype.Feed = function(input, inputlayer, hiddenlayers, outputlay
     })
     //get output layer result
     var lasthiddenresult = hiddenlayers[hiddenlayers.length-1].Units.map(function(t){return t.Result});
-    outputlayer.forEach(function(o,p){
+    outputlayer.Units.forEach(function(o,p){
         o.Result = o.Output(lasthiddenresult,o.InputWeight);
     })
 }
@@ -137,7 +151,8 @@ ANN.NetWork.prototype.InitializeWeight = function (hiddenlayers, outputlayer){
     var outputunits = outputlayer.Units;
     outputunits.forEach(function(e){
         var hiddenlayerlength = hiddenlayers.length;
-        var lasthiddenlength = hiddenlayers[hiddenlayerlength-1].Length;
+        var lasthiddenlength = hiddenlayers[hiddenlayerlength-1].Length();
+        e.InputWeight = [];
         for (var i =0;i<lasthiddenlength;i++){
             e.InputWeight.push((Math.random()-0.5)/10);
         }
@@ -152,8 +167,9 @@ ANN.NetWork.prototype.InitializeWeight = function (hiddenlayers, outputlayer){
         } else {
             insidelayer = this.InputLayer;
         }
-        insidelayerlength = insidelayer.Length;
+        insidelayerlength = insidelayer.Length();
         hiddenlayerunits.forEach(function (e){
+            e.InputWeight = [];
             for (var j =0; j<insidelayerlength;j++){
                 e.InputWeight.push((Math.random()-0.5)/10);
             }
@@ -164,11 +180,12 @@ ANN.NetWork.prototype.InitializeWeight = function (hiddenlayers, outputlayer){
 
 ANN.NetWork.prototype.OutputWeightCalc = function (){
     var inputunits = this.InputLayer.Units;
+    var hiddenlayers = this.HiddenLayers;
+    var outputlayer = this.OutputLayer;
     inputunits.forEach(function(e,j){
         var outputweightarray = hiddenlayers[0].Units.map(function(h){return h.InputWeight[j]});
         e.OutputWeight = outputweightarray;
     })
-    var hiddenlayers = this.HiddenLayers;
     hiddenlayers.forEach(function(e,k){
         var nextlayer;
         if (k == hiddenlayers.length-1){
@@ -208,24 +225,24 @@ ANN.InputLayer = function (name){
 }
 
 ANN.InputLayer.prototype = Object.create(ANN.Layer.prototype);
-ANN.InputLayer.prototype.constructor = InputLayer;
+ANN.InputLayer.prototype.constructor = ANN.InputLayer;
 
 
 ANN.HiddenLayer = function (name){
     ANN.Layer.call(this, ANN.LayerTypeEnum.Hidden, name);
 }
 
-ANN.HiddenLayer.prototype = Object.creat(ANN.Layer.prototype);
-ANN.HiddenLayer.prototype.constructor = HiddenLayer;
+ANN.HiddenLayer.prototype = Object.create(ANN.Layer.prototype);
+ANN.HiddenLayer.prototype.constructor = ANN.HiddenLayer;
 
 ANN.OutputLayer = function (name){
     ANN.Layer.call(this, ANN.LayerTypeEnum.Output, name);
 }
 
 ANN.OutputLayer.prototype  = Object.create(ANN.Layer.prototype);
-Ann.OutputLayer.prototype.constructor = OutputLayer;
+ANN.OutputLayer.prototype.constructor = ANN.OutputLayer;
 
-ANN.InputObject = function (){this.X=0}
+ANN.InputObject = function(){};
 
 ANN.PercepTronTypeEnum = {Sig:"S", Per:"P"}
 
@@ -240,7 +257,7 @@ ANN.Perceptron = function (layername,layertype, p){
 ANN.Perceptron.prototype.Output = function (x, win){
     var cap = 0;
     for (var i =0; i<x.length;i++){
-            cap += x[i]*w[i];
+            cap += x[i]*win[i];
     }
     if (this.PerceptronType == ANN.PercepTronTypeEnum.Per){
         if (cap > 0){
@@ -250,13 +267,14 @@ ANN.Perceptron.prototype.Output = function (x, win){
             return 0;
         }
     }
-    if (this.PercepTronType == ANN.PercepTronTypeEnum.Sig){
+    if (this.PerceptronType == ANN.PercepTronTypeEnum.Sig){
         return ANN.Sigmoid(cap);
     }
 }
 
 ANN.Sigmoid = function (t){
-    return 1/(1+Math.exp(-t));
+    var result = 1/(1+Math.exp(-t)); 
+    return result;
 }
 
 ANN.Perceptron.prototype.ErrorTermCalc = function (x,win,wout,t,nextlayer){
@@ -269,11 +287,13 @@ ANN.Perceptron.prototype.ErrorTermCalc = function (x,win,wout,t,nextlayer){
     else {
         result = term*(this.HiddenLayerErrorTerm(wout,nextlayer));
     }
+    return result;
 }
 
 ANN.Perceptron.prototype.HiddenLayerErrorTerm = function (w,n){
     var temp = n.Units;
-    var errorterm, weight,result;
+    var result = 0;
+    var errorterm, weight;
     temp.forEach(function (e,i){
         errorterm = e.ErrorTerm;
         weight = w[i];

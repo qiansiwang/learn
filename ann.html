@@ -1,0 +1,159 @@
+<html>
+    <head>
+        <title>Neural Network Page</title>
+        <script src="ann.js"></script>
+        <style>
+            body {margin:0px;}
+            table {
+                width:100%;
+                height:100%;
+            }
+            .canvas {
+                width:100%;
+                height:500px;
+                margin:0px;
+            }
+            .layer {
+                width:100px;
+            }
+            li {font-size:30px;}
+            canvas {
+                width:100px;
+                height:100px;
+                margin:0px;
+                border:1px solid #000000;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="example" onmousedown="collect(event)"></canvas>
+        <div>
+            <button id="addlayer" onclick="AddLayer()">+ Hidden Layer</button>
+            <button id="deletelayer" onclick="DeleteLayer()">- Hidden Layer</button>
+        </div>
+        <div>
+            <button id="addunit" onclick="AddUnit()">+ Unit</button>
+            <button id="addunit" onclick="DeleteUnit()">- Unit</button>
+        </div>
+        <div class ="canvas">
+            <table>
+                <tr id="row">
+                        <td class="layer" id="inputcolumn" onclick="highlight(this)"></td>
+                        <td class="layer" id="hiddencolumn1" onclick="highlight(this)"></td>
+                        <td class="layer" id="outputcolumn" onclick="highlight(this)"></td>
+                </tr>
+            </table>
+        </div>
+        <div><button id="train" onclick="train()">Train</button></div>
+        <script>
+            var ann = new ANN.NetWork("newnetwork");
+            ann.AddLayer("Input");
+            ann.AddLayer("Hidden");
+            ann.AddLayer("Output");
+            var counter = 2;
+            var columninselection,columnid;
+            function AddLayer(){
+                ann.AddLayer("Hidden");
+                var newnode = document.createElement("td");
+                newnode.setAttribute("id", "hiddencolumn"+counter.toString());
+                newnode.setAttribute("class", "layer");
+                newnode.setAttribute("onclick", "highlight(this)");
+                var referencenode = document.getElementById("outputcolumn")
+                document.getElementById("row").insertBefore(newnode, referencenode)
+                counter++;
+            }
+            function DeleteLayer(){
+                if (counter >2){
+                    ann.DeleteLayer();
+                    var id = "hiddencolumn" + (counter-1).toString();
+                    var node = document.getElementById(id);
+                    document.getElementById("row").removeChild(node);
+                    counter--;
+                }
+            }
+            
+            function highlight(e){
+                var otherele = document.querySelectorAll(".layer");
+                columnid = e.id;
+                otherele.forEach(function(e){
+                    e.style.border = "";
+                })
+                document.getElementById(e.id).style.border = "1px solid #000000";
+                if (e.id.indexOf("input")!=-1){
+                    columninselection = "InputLayer"
+                }
+                if (e.id.indexOf("hidden")!=-1){
+                    columninselection = "HiddenLayer" + e.id.slice(12)
+                }
+                if (e.id.indexOf("output")!=-1){
+                    columninselection = "OutputLayer"
+                }
+            }
+            function AddUnit(){
+                ann.AddUnit(columninselection, "S");
+                var newunit = document.createElement("li");
+                var referencenode = document.getElementById(columnid);
+                referencenode.appendChild(newunit);
+            }
+            function DeleteUnit(){
+                var lastnode = document.getElementById(columnid).lastChild;
+                if (lastnode){
+                    ann.DeleteUnit(columninselection);
+                    document.getElementById(columnid).removeChild(lastnode);
+                }
+            }
+
+            function train(){
+                ann.Train(dataset);
+                //after learning render the cavas based on results
+                for (var x=0; x<100; x++){
+                    for (var y=0; y<100; y++){
+                        var input = [x,y];
+                        ann.Feed(input);
+                        var output1 = ann.OutputLayer.Units[0].Result;
+                        var output2 = ann.OutputLayer.Units[1].Result;
+                        var output;
+                        if (output1 > output2){
+                            output = output1;
+                        } else {
+                            output = output2;
+                        }
+                        ctx.fillStyle = colorCalc(output);
+                        ctx.fillRect(x,y,1,1);
+                    }
+                }
+            }
+
+            function colorCalc(x){
+                return "rgba(0,0,0," + x.toString() + ")";
+            }
+
+
+            var dataset = []
+            var canvas = document.getElementById("example");
+            canvas.width = 100;
+            canvas.height = 100;
+            var ctx = canvas.getContext("2d");
+            canvas.addEventListener('contextmenu', function(e){
+                e.preventDefault();
+            })
+
+            function collect(event){
+                var x = event.clientX;
+                var y = event.clientY;
+                var z = event.button;
+                if (z == 2){
+                    z -=1;
+                }
+                var data = {Key:[x,y], Value:z};
+                dataset.push(data);
+                ctx.fillText(z,x,y);
+            }
+
+
+
+            
+
+        </script>
+    </body>
+</html>

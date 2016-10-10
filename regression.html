@@ -1,0 +1,40 @@
+<html>
+    <head>
+        <title>Regression Page</title>
+    </head>
+    <body>
+        <div>
+            <button id="learn" onclick="learnClick()">Learn</button>
+        </div>
+        <canvas id="test"></canvas>
+        <script src="regression.js"></script>
+        <script>
+            var points = (function(){
+                var result = [];
+                for (i=0; i<20; i++){
+                    var x = Math.random()*200 + 100;
+                    var y = (1+Math.random()/5*Math.pow(-1,i))*x;
+                    result.push({Key:[1,x], Value:y}); 
+                }
+                return result;
+            })();
+            var canvasdom = document.getElementById('test');
+            canvasdom.height = 400;
+            canvasdom.width = 400;
+            canvasdom.style.border = "2px solid #000000";
+            var ctx = canvasdom.getContext('2d');
+            points.forEach(function(e){
+                ctx.fillRect(e.Key[1], 400-e.Value,4,4);
+            })
+            function learnClick(){
+                var func = REGRESSION.LinearFunction;
+                var w = REGRESSION.BatchLearn(points, 500, func);
+                ctx.moveTo(100,400-(100*w[1]+w[0]));
+                ctx.lineTo(300,400-(300*w[1]+w[0]));
+                ctx.stroke();
+            }
+
+
+        </script>
+    </body>
+</html>
