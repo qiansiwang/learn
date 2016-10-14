@@ -18,8 +18,8 @@
             }
             li {font-size:30px;}
             canvas {
-                width:100px;
-                height:100px;
+                width:200px;
+                height:200px;
                 margin:0px;
                 border:1px solid #000000;
             }
@@ -108,18 +108,13 @@
                 //after learning render the cavas based on results
                 for (var x=0; x<100; x++){
                     for (var y=0; y<100; y++){
-                        var input = [x,y];
+                        var input = [1,x/100,y/100];
                         ann.Feed(input);
                         var output1 = ann.OutputLayer.Units[0].Result;
                         var output2 = ann.OutputLayer.Units[1].Result;
-                        var output;
-                        if (output1 > output2){
-                            output = output1;
-                        } else {
-                            output = output2;
-                        }
-                        ctx.fillStyle = colorCalc(output);
-                        ctx.fillRect(x,y,1,1);
+                        var output = [output1, output2];
+                        ctx.fillStyle = colorCalc(output[1]);
+                        ctx.fillRect(2*x,2*y,1,1);
                     }
                 }
             }
@@ -131,8 +126,8 @@
 
             var dataset = []
             var canvas = document.getElementById("example");
-            canvas.width = 100;
-            canvas.height = 100;
+            canvas.width = 200;
+            canvas.height = 200;
             var ctx = canvas.getContext("2d");
             canvas.addEventListener('contextmenu', function(e){
                 e.preventDefault();
@@ -145,7 +140,8 @@
                 if (z == 2){
                     z -=1;
                 }
-                var data = {Key:[x,y], Value:z};
+                var v = 1-z;
+                var data = {Key:[1,x/200,y/200], Value:[v,z]};
                 dataset.push(data);
                 ctx.fillText(z,x,y);
             }

@@ -2,8 +2,8 @@
 
 var ANN = ANN || {};
 
-ANN.LEARNINGSTEP = 0.05;
-ANN.TRAININGSTEPS = 200;
+ANN.LEARNINGSTEP = 0.5;
+ANN.TRAININGSTEPS = 1000000;
 ANN.counter = 1;
 ANN.NetWork = function (name){
     this.Name = name;
@@ -56,12 +56,9 @@ ANN.NetWork.prototype.DeleteUnit = function (layername){
 
 //Assume dataset is a list of key value pair
 ANN.NetWork.prototype.Train = function (dataset){
-    var inputlayer = this.InputLayer;
-    var hiddenlayers = this.HiddenLayers;
-    var outputlayer = this.OutputLayer;
     var counter = 1;
     //initial the input weight for all units
-    this.InitializeWeight(hiddenlayers,outputlayer);
+    this.InitializeWeight();
     //training routine
     do {
         for (var i=0;i<dataset.length;i++){
@@ -70,34 +67,59 @@ ANN.NetWork.prototype.Train = function (dataset){
              //forward propergate to get results of each unit
             this.Feed(input);
             //back propergate to get error terms of each unit
-            this.BackPropergateErrorTerm(output, inputlayer, hiddenlayers, outputlayer);
+            this.BackPropergateErrorTerm(output);
             //update input weight for all units
-            this.UpdateInputWeight(hiddenlayers, outputlayer);
+            this.UpdateInputWeight();
             //update output weight for all units
             this.OutputWeightCalc();
             counter++;
+            if (counter > ANN.TRAININGSTEPS){ return }
         }
     }
-    while (counter <= ANN.TRAININGSTEPS);
+    while (true);
 }
 
-ANN.NetWork.prototype.UpdateInputWeight = function (hiddenlayers, outputlayer){
-    hiddenlayers.forEach(function(e){
+ANN.NetWork.prototype.UpdateInputWeight = function (){
+    var inputlayer = this.InputLayer;
+    var hiddenlayers = this.HiddenLayers;
+    var outputlayer = this.OutputLayer;
+    var previouslayer, ele, step, x;
+    hiddenlayers.forEach(function(e,i){
+        if (i== 0){
+           previouslayer = inputlayer;
+        } else {
+           previouslayer = hiddenlayers[i-1];
+        }
+        x = previouslayer.Units.map(function(e){return e.Result;}); 
         e.Units.forEach(function(f){
-            f.UpdateInputWeight();
+            ele = ANN.LEARNINGSTEP * f.ErrorTerm;
+            f.InputWeight.forEach(function(m,n,o){
+                step = ele * x[n];
+                o[n] += step
+            })
+
         })
     })
+    previouslayer = hiddenlayers[hiddenlayers.length-1];
+    x = previouslayer.Units.map(function(e){return e.Result;});
     outputlayer.Units.forEach(function(e){
-        e.UpdateInputWeight();
+        ele = ANN.LEARNINGSTEP * e.ErrorTerm;
+        e.InputWeight.forEach(function(m,n,o){
+            step = ele * x[n];
+            o[n] += step;
+        })
     })    
 }
 
-ANN.NetWork.prototype.BackPropergateErrorTerm = function (output, inputlayer, hiddenlayers, outputlayer){
+ANN.NetWork.prototype.BackPropergateErrorTerm = function (output){
+    var inputlayer = this.InputLayer;
+    var hiddenlayers = this.HiddenLayers;
+    var outputlayer = this.OutputLayer;
     var lasthiddenresult = hiddenlayers[hiddenlayers.length-1].Units.map(function(t){return t.Result});
     var outputunits = outputlayer.Units;
     //output layer error term
     outputunits.forEach(function(a,b){
-        a.ErrorTerm = a.ErrorTermCalc(lasthiddenresult,a.InputWeight,a.OutputWeight,output);
+        a.ErrorTerm = a.ErrorTermCalc(lasthiddenresult,a.InputWeight,a.OutputWeight,output[b]);
     })
     //hiddenlayer error term
     for (i = hiddenlayers.length -1; i>=0; i--){
@@ -116,7 +138,7 @@ ANN.NetWork.prototype.BackPropergateErrorTerm = function (output, inputlayer, hi
         }
         var previouslayerresult = previouslayer.Units.map(function (a){return a.Result});
         thislayerunits.forEach(function (m,n){
-            m.ErrorTerm = m.ErrorTermCalc(previouslayerresult,m.InputWeight,m.OutputWeight,output,nextlayer);
+            m.ErrorTerm = m.ErrorTermCalc(previouslayerresult,m.InputWeight,m.OutputWeight,output[n],nextlayer);
         })
     }
 }
@@ -146,7 +168,9 @@ ANN.NetWork.prototype.Feed = function(input){
     })
 }
 
-ANN.NetWork.prototype.InitializeWeight = function (hiddenlayers, outputlayer){
+ANN.NetWork.prototype.InitializeWeight = function (){
+    var hiddenlayers = this.HiddenLayers;
+    var outputlayer = this.OutputLayer;
     //set initial input weight for output layer units
     var outputunits = outputlayer.Units;
     outputunits.forEach(function(e){
@@ -279,7 +303,7 @@ ANN.Sigmoid = function (t){
 
 ANN.Perceptron.prototype.ErrorTermCalc = function (x,win,wout,t,nextlayer){
     var result, output, term;
-    output = this.Output(x,win);
+    output = this.Result;
     term = output*(1-output);
     if (this.LayerType == ANN.LayerTypeEnum.Output){
         result = term*(t - output);
@@ -302,9 +326,4 @@ ANN.Perceptron.prototype.HiddenLayerErrorTerm = function (w,n){
     return result;
 }
 
-ANN.Perceptron.prototype.UpdateInputWeight = function (){
-    var step = ANN.LEARNINGSTEP * this.ErrorTerm * this.Result;
-    this.InputWeight.forEach(function (e){
-      e += step;  
-    })
-}
+
