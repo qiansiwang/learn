@@ -1,0 +1,91 @@
+<html>
+    <head>
+        <title>Emstimating Mean</title>
+        <style>
+            body {margin:0px;}
+        </style>
+    </head>
+    <body>
+        <script src="em.js"></script>
+        <div>
+            <canvas id="canvas"></canvas>
+        </div>
+        <div>
+            <button id="button" onclick="train()">Train</button>
+        </div>
+        <script>
+            var sampledata = [];
+            var canvas = document.getElementById("canvas");
+            canvas.width = 100;
+            canvas.height = 100;
+            var ctx = canvas.getContext("2d");
+
+            (function generatesample() {
+                var low = generatevector(0,10,2,50);
+                var medium = generatevector(30,50,2,100);
+                var high = generatevector(75,100,2,100);
+                sampledata = sampledata.concat(low, medium,high);
+            })();
+
+            function generatevector (low, high, dimention, amount, name){
+                var result = [];
+                var i=0;
+                while (i < amount){
+                    var vector = [];
+                    for (var j = 0; j< dimention; j++){
+                        var a = low + Math.floor(Math.random()*(high - low));
+                        vector.push(a);
+                    }
+                    var e = {Key:vector,Value:name};
+                    result.push(e);
+                    i++;
+                }
+                return result;
+            }
+
+            (function rendercanvas(){
+                sampledata.forEach(function (e){
+                    var x = e.Key[0];
+                    var y = e.Key[1];
+                    ctx.fillRect(x,y,1,1);
+                })
+            })();
+
+            function train(){
+                var x = sampledata.map(function(e){return e.Key[0]});
+                var y = sampledata.map(function(e){return e.Key[1]});
+                var classifierx = new EM.Classifier(x,3);
+                var classifiery = new EM.Classifier(y,3);
+                classifierx.Train();
+                classifiery.Train();
+                classifierx.Result.forEach(function(e){
+                    renderx(e);
+                })
+
+
+            }
+            function renderx(e){
+                var x = e.input;
+                var cluster = e.cluster;
+                ctx.fillStyle = getcolor(cluster);
+                ctx.fillRect(x,0,0.5,100);
+            }
+            function getcolor(x){
+                if (x==0){
+                    return "rgba(255,0,0,0.2)"
+                }
+                if (x==1){
+                    return "rgba(0,255,0,0.2)"
+                }
+                if (x==2){
+                    return "rgba(0,0,255,0.2)"
+                }
+            }
+            
+            
+
+
+            
+        </script>     
+    </body>
+</html>   

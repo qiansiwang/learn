@@ -43,11 +43,12 @@ NBC.Classifier = function (dataset){
 }
 
 NBC.Classifier.prototype.Classify = function (key){
-    var resultlist;
+    var resultlist = []
+    var result;
     var pv = this.PvList;
     var pwv = this.PwvList;
     var allfeatures = NBC.CollectAllFeatures(this.DataSet);
-    var newkey, result;
+    var newkey = [];
     //find overlap between key and all features
     key.forEach(function(e){
         allfeatures.forEach(function(j){
@@ -88,13 +89,14 @@ calculate all P(v)
 NBC.PvCalc = function (dataset){
     var result = [];
     var valuelist = dataset.map(function(e){return e.Value});
-    valuelist.forEach(function(e){
+    var uniquevaluelist = NBC.SqueezeList(valuelist);
+    uniquevaluelist.forEach(function(e){
         var counter = NBC.ValueCounter(e,valuelist);
         var ele = {v:e};
         ele.result = counter/valuelist.length; 
         result.push(ele);
     })
-    return NBC.SqueezeList(result);
+    return result;
 }
 
 
@@ -149,4 +151,5 @@ NBC.ValueCounter = function (value, list){
                 result++;
             }
     }
+    return result;
 }

@@ -1,8 +1,73 @@
 <html>
     <head>
         <title>Naive Bayes Classifier</title>
+        <style>
+            body {margin:0px;}
+        </style>
     </head>
     <body>
         <script src="naivebayes.js"></script>
+        <div>
+            <canvas id="canvas" onclick="classify(event)"></canvas>
+        </div>
+        <script>
+            var sampledata = [];
+            var canvas = document.getElementById("canvas");
+            canvas.width = 100;
+            canvas.height = 100;
+            var ctx = canvas.getContext("2d");
+            
+            function randomsample(){
+                var low = generatevector(0,20,2,100,"low");
+                var medium = generatevector(15,60,2,300,"med");
+                var high = generatevector(50,100,2,500,"high");
+                sampledata = sampledata.concat(low, medium,high);         
+            }
+            function generatevector (low, high, dimention, amount, name){
+                var result = [];
+                var i=0;
+                while (i < amount){
+                    var vector = [];
+                    for (var j = 0; j< dimention; j++){
+                        var a = low + Math.floor(Math.random()*(high - low));
+                        vector.push(a);
+                    }
+                    var e = {Key:vector,Value:name};
+                    result.push(e);
+                    i++;
+                }
+                return result;
+            }
+            (function rendercanvas(){
+                randomsample();
+                sampledata.forEach(function (e){
+                    var x = e.Key[0];
+                    var y = e.Key[1];
+                    fill(e.Value,x,y);
+                })
+            })();
+            function fill(name,x,y){
+                if (name == "low"){
+                        ctx.fillStyle = "blue"
+                    }
+                    if (name == "med"){
+                        ctx.fillStyle = "red"
+                    }
+                    if (name == "high"){
+                        ctx.fillStyle = "green"
+                    }
+                    ctx.fillRect(x,y,1,1)
+            }
+            var classifier = new NBC.Classifier(sampledata);
+            function classify(e){
+                var x = e.clientX;
+                var y = e.clientY;
+                var groupname = classifier.Classify([x,y]);
+                fill(groupname,x,y);             
+            }
+
+
+
+        </script>     
     </body>
 </html>
